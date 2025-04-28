@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ماشین حساب ترکیبیات | Iliya Bandei</title>
+    <style>
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --dark: #0f0c29;
+            --light: #f8f9fa;
+            --accent: #ff2d75;
+            --math: #4cc9f0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--dark), var(--primary));
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .calculator {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+        
+        .display {
+            padding: 25px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent 45%,
+                rgba(106, 17, 203, 0.3) 50%,
+                transparent 55%
+            );
+            animation: shine 6s infinite linear;
+            z-index: 0;
+        }
+        
+        @keyframes shine {
+            0% { transform: rotate(0deg) translate(-50%, -50%); }
+            100% { transform: rotate(360deg) translate(-50%, -50%); }
+        }
+        
+        .display-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .previous-operand {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            min-height: 24px;
+            word-wrap: break-word;
+        }
+        
+        .current-operand {
+            font-size: 2rem;
+            margin-top: 10px;
+            word-wrap: break-word;
+            color: var(--math);
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        button {
+            border: none;
+            outline: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: 0.5s;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .operator {
+            background: rgba(37, 117, 252, 0.2);
+            color: #7fb6ff;
+        }
+        
+        .equals {
+            background: linear-gradient(135deg, var(--accent), #ff6b6b);
+            grid-column: span 2;
+        }
+        
+        .function {
+            background: rgba(255, 45, 117, 0.2);
+            color: #ff8fab;
+        }
+        
+        .combinatorics {
+            background: rgba(76, 201, 240, 0.2);
+            color: var(--math);
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 600px) {
+            .buttons {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .combinatorics {
+                font-size: 0.9rem;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="display-content">
+                <div class="previous-operand" id="previous-operand"></div>
+                <div class="current-operand" id="current-operand">0</div>
+            </div>
+        </div>
+        <div class="buttons">
+            <button class="function" onclick="clearAll()">AC</button>
+            <button class="function" onclick="deleteLastChar()">DEL</button>
+            <button class="function" onclick="appendOperator('%')">%</button>
+            <button class="operator" onclick="appendOperator('/')">÷</button>
+            <button class="combinatorics" onclick="calculateFactorial()">n!</button>
+            
+            <button onclick="appendNumber('7')">7</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('9')">9</button>
+            <button class="operator" onclick="appendOperator('×')">×</button>
+            <button class="combinatorics" onclick="calculatePermutation()">P(n,k)</button>
+            
+            <button onclick="appendNumber('4')">4</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('6')">6</button>
+            <button class="operator" onclick="appendOperator('-')">-</button>
+            <button class="combinatorics" onclick="calculateCombination()">C(n,k)</button>
+            
+            <button onclick="appendNumber('1')">1</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('3')">3</button>
+            <button class="operator" onclick="appendOperator('+')">+</button>
+            <button class="combinatorics" onclick="calculatePowerSet()">P(S)</button>
+            
+            <button onclick="appendNumber('0')">0</button>
+            <button onclick="appendNumber('.')">.</button>
+            <button class="equals" onclick="calculate()">=</button>
+            <button class="combinatorics" onclick="calculateGCD()">GCD</button>
+        </div>
+    </div>
+    
+    <div class="footer">
+        ساخته شده توسط Iliya Bandei | ماشین حساب ترکیبیات پیشرفته
+    </div>
+
+    <script>
+        // متغیرهای ماشین حساب
+        let currentOperand = '0';
+        let previousOperand = '';
+        let operation = undefined;
+        let resetScreen = false;
+        
+        // عناصر DOM
+        const currentOperandElement = document.getElementById('current-operand');
+        const previousOperandElement = document.getElementById('previous-operand');
+        
+        // به روزرسانی نمایشگر
+        function updateDisplay() {
+            currentOperandElement.innerText = currentOperand;
+            previousOperandElement.innerText = previousOperand;
+        }
+        
+        // اضافه کردن عدد
+        function appendNumber(number) {
+            if (currentOperand === '0' || resetScreen) {
+                currentOperand = '';
+                resetScreen = false;
+            }
+            
+            if (number === '.' && currentOperand.includes('.')) return;
+            
+            currentOperand += number;
+            updateDisplay();
+        }
+        
+        // اضافه کردن عملگر
+        function appendOperator(operator) {
+            if (currentOperand === '') return;
+            
+            if (previousOperand !== '') {
+                calculate();
+            }
+            
+            switch (operator) {
+                case '+':
+                    operation = '+';
+                    break;
+                case '-':
+                    operation = '-';
+                    break;
+                case '×':
+                    operation = '*';
+                    break;
+                case '÷':
+                    operation = '/';
+                    break;
+                case '%':
+                    operation = '%';
+                    break;
+            }
+            
+            previousOperand = `${currentOperand} ${operator}`;
+            currentOperand = '';
+            updateDisplay();
+        }
+        
+        // محاسبه
+        function calculate() {
+            let computation;
+            const prev = parseFloat(previousOperand);
+            const current = parseFloat(currentOperand);
+            
+            if (isNaN(prev) || isNaN(current)) return;
+            
+            switch (operation) {
+                case '+':
+                    computation = prev + current;
+                    break;
+                case '-':
+                    computation = prev - current;
+                    break;
+                case '*':
+                    computation = prev * current;
+                    break;
+                case '/':
+                    computation = prev / current;
+                    break;
+                case '%':
+                    computation = prev % current;
+                    break;
+                default:
+                    return;
+            }
+            
+            currentOperand = computation.toString();
+            operation = undefined;
+            previousOperand = '';
+            resetScreen = true;
+            updateDisplay();
+        }
+        
+        // محاسبه فاکتوریل
+        function calculateFactorial() {
+            const num = parseInt(currentOperand);
+            if (isNaN(num) || num < 0) {
+                currentOperand = 'خطا';
+                updateDisplay();
+                return;
+            }
+            
+            let result = 1;
+            for (let i = 2; i <= num; i++) {
+                result *= i;
+            }
+            
+            previousOperand = `${num}! =`;
+            currentOperand = result.toString();
+            updateDisplay();
+        }
+        
+        // محاسبه جایگشت P(n,k)
+        function calculatePermutation() {
+            const input = prompt("لطفاً n و k را با کاما جدا کنید (مثال: 5,3):");
+            if (!input) return;
+            
+            const [n, k] = input.split(',').map(num => parseInt(num.trim()));
+            
+            if (isNaN(n) || isNaN(k) || k > n || n < 0 || k < 0) {
+                currentOperand = 'خطا';
+                updateDisplay();
+                return;
+            }
+            
+            let result = 1;
+            for (let i = n; i > n - k; i--) {
+                result *= i;
+            }
+            
+            previousOperand = `P(${n},${k}) =`;
+            currentOperand = result.toString();
+            updateDisplay();
+        }
+        
+        // محاسبه ترکیب C(n,k)
+        function calculateCombination() {
+            const input = prompt("لطفاً n و k را با کاما جدا کنید (مثال: 5,3):");
+            if (!input) return;
+            
+            const [n, k] = input.split(',').map(num => parseInt(num.trim()));
+            
+            if (isNaN(n) || isNaN(k) || k > n || n < 0 || k < 0) {
+                currentOperand = 'خطا';
+                updateDisplay();
+                return;
+            }
+            
+            // محاسبه با فرمول C(n,k) = n! / (k!(n-k)!)
+            let numerator = 1;
+            for (let i = n; i > n - k; i--) {
+                numerator *= i;
+            }
+            
+            let denominator = 1;
+            for (let i = 2; i <= k; i++) {
+                denominator *= i;
+            }
+            
+            const result = numerator / denominator;
+            
+            previousOperand = `C(${n},${k}) =`;
+            currentOperand = result.toString();
+            updateDisplay();
+        }
+        
+        // محاسبه تعداد زیرمجموعه‌ها (توان مجموعه)
+        function calculatePowerSet() {
+            const n = parseInt(currentOperand);
+            if (isNaN(n) || n < 0) {
+                currentOperand = 'خطا';
+                updateDisplay();
+                return;
+            }
+            
+            const result = Math.pow(2, n);
+            
+            previousOperand = `|P(S)| (n=${n}) =`;
+            currentOperand = result.toString();
+            updateDisplay();
+        }
+        
+        // محاسبه بزرگترین مقسوم‌علیه مشترک
+        function calculateGCD() {
+            const input = prompt("لطفاً دو عدد را با کاما جدا کنید (مثال: 48,18):");
+            if (!input) return;
+            
+            const [a, b] = input.split(',').map(num => parseInt(num.trim()));
+            
+            if (isNaN(a) || isNaN(b)) {
+                currentOperand = 'خطا';
+                updateDisplay();
+                return;
+            }
+            
+            function gcd(x, y) {
+                return y === 0 ? x : gcd(y, x % y);
+            }
+            
+            const result = gcd(Math.abs(a), Math.abs(b));
+            
+            previousOperand = `GCD(${a},${b}) =`;
+            currentOperand = result.toString();
+            updateDisplay();
+        }
+        
+        // پاک کردن همه
+        function clearAll() {
+            currentOperand = '0';
+            previousOperand = '';
+            operation = undefined;
+            updateDisplay();
+        }
+        
+        // حذف آخرین کاراکتر
+        function deleteLastChar() {
+            if (currentOperand.length === 1) {
+                currentOperand = '0';
+            } else {
+                currentOperand = currentOperand.slice(0, -1);
+            }
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>
